@@ -16,15 +16,13 @@ export default function Footer() {
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
           <div>
             <a href="#" className="inline-block">
-              <div className="bg-white rounded-sm px-2 py-1 inline-flex">
-                <Image
-                  src="/logo.png"
-                  alt="Digital Clan"
-                  width={110}
-                  height={33}
-                  className="h-7 w-auto object-contain"
-                />
-              </div>
+              <Image
+                src="/logo.png"
+                alt="Digital Clan"
+                width={130}
+                height={39}
+                className="h-9 w-auto object-contain rounded-sm"
+              />
             </a>
             <p className="text-xs text-muted mt-2 tracking-[0.15em] uppercase">
               Technology | Innovation | Creativity | Ideas

@@ -31,16 +31,14 @@ export default function Navbar() {
     >
       <nav className="max-w-7xl mx-auto px-6 lg:px-8 h-18 flex items-center justify-between">
         <a href="#" className="flex items-center">
-          <div className="bg-white rounded-sm px-2 py-1">
-            <Image
-              src="/logo.png"
-              alt="Digital Clan"
-              width={120}
-              height={36}
-              className="h-8 w-auto object-contain"
-              priority
-            />
-          </div>
+          <Image
+            src="/logo.png"
+            alt="Digital Clan"
+            width={140}
+            height={42}
+            className="h-10 w-auto object-contain rounded-sm"
+            priority
+          />
         </a>
 
         <ul className="hidden md:flex items-center gap-8">

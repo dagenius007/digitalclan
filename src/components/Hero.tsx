@@ -1,52 +1,129 @@
 import { ArrowRight } from "lucide-react";
 import Image from "next/image";
 
-const cities = [
-  { name: "Cairo", x: "68.5%", y: "10%" },
-  { name: "Casablanca", x: "14%", y: "5%" },
-  { name: "Dakar", x: "1%", y: "30%" },
-  { name: "Lagos", x: "30%", y: "44%" },
-  { name: "Accra", x: "25%", y: "43%" },
-  { name: "Addis Ababa", x: "80%", y: "38%" },
-  { name: "Nairobi", x: "78%", y: "52%" },
-  { name: "Johannesburg", x: "65%", y: "85%" },
+/*
+ * City coordinates derived from africa.svg geoViewBox:
+ * "-25.360994 37.343521 59.838547 -34.833225"
+ * x = (lon + 25.361) / 85.200 * 239.057
+ * y = (37.344 - lat) / 72.177 * 217.318
+ */
+const CITIES = [
+  { name: "Casablanca", x: 49.9,  y: 11.4 },
+  { name: "Cairo",      x: 158.9, y: 21.9 },
+  { name: "Dakar",      x: 22.2,  y: 68.2 },
+  { name: "Lagos",      x: 80.7,  y: 93.0 },
+  { name: "Accra",      x: 70.7,  y: 95.7 },
+  { name: "AddisAbaba", x: 179.9, y: 85.2 },
+  { name: "Nairobi",    x: 174.6, y: 116.3 },
+  { name: "Kinshasa",   x: 114.2, y: 125.4 },
+  { name: "Joburg",     x: 149.9, y: 191.3 },
 ];
+
+const CONNECTIONS = [
+  ["Casablanca", "Cairo"],
+  ["Dakar",      "Lagos"],
+  ["Lagos",      "Accra"],
+  ["Lagos",      "Nairobi"],
+  ["Cairo",      "AddisAbaba"],
+  ["AddisAbaba", "Nairobi"],
+  ["Nairobi",    "Joburg"],
+  ["Kinshasa",   "Nairobi"],
+];
+
+function cityPos(name: string) {
+  return CITIES.find((c) => c.name === name)!;
+}
 
 function AfricaMap() {
   return (
-    <div className="relative w-full h-full flex items-center justify-center">
-      {/* Outer glow */}
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-        <div className="w-96 h-96 bg-brand/8 rounded-full blur-3xl" />
+    <div
+      className="relative w-full max-w-sm lg:max-w-none"
+      style={{ animation: "var(--animate-map-entrance)" }}
+    >
+      {/* Breathing glow behind continent */}
+      <div
+        className="absolute inset-0 flex items-center justify-center pointer-events-none"
+        style={{ animation: "var(--animate-glow-breathe)" }}
+      >
+        <div className="w-72 h-72 rounded-full bg-brand/10 blur-3xl" />
       </div>
 
-      {/* Africa SVG */}
-      <div className="relative w-full max-w-sm lg:max-w-md">
-        <Image
-          src="/africa.svg"
-          alt="Africa map"
-          width={480}
-          height={436}
-          className="w-full h-auto opacity-90"
-          priority
-        />
+      {/* Africa base map image */}
+      <Image
+        src="/africa.svg"
+        alt="Africa map"
+        width={480}
+        height={436}
+        className="relative w-full h-auto"
+        priority
+      />
 
-        {/* City dot overlays positioned absolutely on the map */}
-        {cities.map((city) => (
-          <div
-            key={city.name}
-            className="absolute"
-            style={{ left: city.x, top: city.y }}
-          >
-            {/* Outer pulse ring */}
-            <div className="absolute -translate-x-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-teal/15" />
-            {/* Mid ring */}
-            <div className="absolute -translate-x-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-teal/30" />
-            {/* Core */}
-            <div className="absolute -translate-x-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-teal" />
-          </div>
-        ))}
-      </div>
+      {/* Animated SVG overlay — exact same viewBox as africa.svg */}
+      <svg
+        viewBox="0 0 239.057 217.318"
+        className="absolute inset-0 w-full h-full"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        {/* Connection lines with flowing dash animation */}
+        {CONNECTIONS.map(([a, b], i) => {
+          const from = cityPos(a);
+          const to   = cityPos(b);
+          const delay = (i * 0.3).toFixed(1);
+          return (
+            <line
+              key={`${a}-${b}`}
+              x1={from.x} y1={from.y}
+              x2={to.x}   y2={to.y}
+              stroke="#00C4DC"
+              strokeWidth="0.35"
+              strokeOpacity="0.35"
+              strokeDasharray="3 3"
+            >
+              <animate
+                attributeName="stroke-dashoffset"
+                from="6" to="0"
+                dur="1.8s"
+                begin={`${delay}s`}
+                repeatCount="indefinite"
+              />
+              <animate
+                attributeName="stroke-opacity"
+                values="0;0.35;0.35"
+                dur="0.6s"
+                begin={`${delay}s`}
+                fill="freeze"
+              />
+            </line>
+          );
+        })}
+
+        {/* City markers — two staggered pulse rings + solid core */}
+        {CITIES.map((city, i) => {
+          const delay1 = (i * 0.25).toFixed(2);
+          const delay2 = (i * 0.25 + 1.0).toFixed(2);
+          return (
+            <g key={city.name}>
+              {/* Pulse ring 1 */}
+              <circle cx={city.x} cy={city.y} r="2" fill="none" stroke="#00C4DC" strokeWidth="0.5">
+                <animate attributeName="r"       values="2;10"    dur="2.4s" begin={`${delay1}s`} repeatCount="indefinite" />
+                <animate attributeName="opacity" values="0.7;0"   dur="2.4s" begin={`${delay1}s`} repeatCount="indefinite" />
+              </circle>
+
+              {/* Pulse ring 2 — offset by 1 s for continuous feel */}
+              <circle cx={city.x} cy={city.y} r="2" fill="none" stroke="#00C4DC" strokeWidth="0.4">
+                <animate attributeName="r"       values="2;10"    dur="2.4s" begin={`${delay2}s`} repeatCount="indefinite" />
+                <animate attributeName="opacity" values="0.5;0"   dur="2.4s" begin={`${delay2}s`} repeatCount="indefinite" />
+              </circle>
+
+              {/* Solid core dot */}
+              <circle cx={city.x} cy={city.y} r="1.8" fill="#00C4DC">
+                <animate attributeName="opacity" values="0;1" dur="0.4s" begin={`${delay1}s`} fill="freeze" />
+              </circle>
+            </g>
+          );
+        })}
+      </svg>
     </div>
   );
 }
@@ -77,9 +154,7 @@ export default function Hero() {
             <br />
             businesses through
             <br />
-            <span className="text-brand-bright font-normal">
-              digital excellence.
-            </span>
+            <span className="text-brand-bright font-normal">digital excellence.</span>
           </h1>
 
           <p className="text-lg text-muted leading-relaxed max-w-lg mb-4">
@@ -89,8 +164,7 @@ export default function Hero() {
           </p>
 
           <p className="text-xs tracking-[0.2em] text-brand-bright/70 uppercase mb-10">
-            Technology &nbsp;|&nbsp; Innovation &nbsp;|&nbsp; Creativity
-            &nbsp;|&nbsp; Ideas
+            Technology &nbsp;|&nbsp; Innovation &nbsp;|&nbsp; Creativity &nbsp;|&nbsp; Ideas
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4">
@@ -110,7 +184,7 @@ export default function Hero() {
           </div>
         </div>
 
-        {/* Right — Africa map */}
+        {/* Right — animated Africa map */}
         <div className="hidden lg:flex items-center justify-center h-full pl-6">
           <AfricaMap />
         </div>
@@ -120,15 +194,13 @@ export default function Hero() {
       <div className="relative max-w-7xl mx-auto w-full px-6 lg:px-8 pb-16">
         <div className="pt-8 border-t border-dark-border grid grid-cols-2 sm:grid-cols-4 gap-8">
           {[
-            { value: "50+", label: "Clients Served" },
+            { value: "50+",  label: "Clients Served" },
             { value: "120+", label: "Projects Delivered" },
-            { value: "8+", label: "African Markets" },
-            { value: "5 yrs", label: "Of Excellence" },
+            { value: "8+",   label: "African Markets" },
+            { value: "5 yrs",label: "Of Excellence" },
           ].map((stat) => (
             <div key={stat.label}>
-              <p className="text-3xl font-semibold text-brand-bright">
-                {stat.value}
-              </p>
+              <p className="text-3xl font-semibold text-brand-bright">{stat.value}</p>
               <p className="text-sm text-muted mt-1">{stat.label}</p>
             </div>
           ))}
